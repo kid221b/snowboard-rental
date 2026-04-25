@@ -74,7 +74,7 @@ async function adminLogin(phone, password) {
         showLoading(true, '登录中...');
         
         // 查询商家管理员
-        const { data: admin, error: adminError } = await supabase
+        const { data: admin, error: adminError } = await supabaseClient
             .from('shop_admins')
             .select('*')
             .eq('phone', phone)
@@ -94,13 +94,13 @@ async function adminLogin(phone, password) {
         }
         
         // 更新最后登录时间
-        await supabase
+        await supabaseClient
             .from('shop_admins')
             .update({ last_login_at: new Date().toISOString() })
             .eq('id', admin.id);
         
         // 获取商家信息
-        const { data: shop, error: shopError } = await supabase
+        const { data: shop, error: shopError } = await supabaseClient
             .from('shops')
             .select('*')
             .eq('id', admin.shop_id)
