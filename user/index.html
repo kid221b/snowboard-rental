@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>雪板租赁 - 首页</title>
+    <!-- 引入公共资源 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="../public/css/common.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="page">
+        <!-- 搜索区域 -->
+        <div class="home-search">
+            <div class="search-box">
+                <span class="icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="搜索雪场/商家">
+            </div>
+            <div class="search-tabs">
+                <span class="search-tab active" data-type="">全部</span>
+                <span class="search-tab" data-type="snowboard">单板</span>
+                <span class="search-tab" data-type="ski">双板</span>
+                <span class="search-tab" data-type="accessory">配件</span>
+            </div>
+        </div>
+        
+        <!-- 商家列表 -->
+        <div class="container">
+            <div id="shopList">
+                <!-- 加载中 -->
+                <div class="empty-state" id="loadingState">
+                    <div class="text">加载中...</div>
+                </div>
+                
+                <!-- 空状态 -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="icon">🏪</div>
+                    <div class="text">暂无商家</div>
+                </div>
+                
+                <!-- 商家列表内容 -->
+                <div id="shopListContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部导航 -->
+    <div class="tab-bar">
+        <div class="tab-item active">
+            <span class="icon">🏪</span>
+            <span class="text">首页</span>
+        </div>
+        <div class="tab-item" onclick="location.href='orders.html'">
+            <span class="icon">📋</span>
+            <span class="text">订单</span>
+        </div>
+        <div class="tab-item" onclick="location.href='login.html'">
+            <span class="icon">👤</span>
+            <span class="text">我的</span>
+        </div>
+    </div>
+
+    <!-- 引入脚本 -->
+    <script src="../public/js/supabase-client.js"></script>
+    <script src="../public/js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 初始化认证状态
+            await initAuth();
+            
+            // 加载商家列表
+            await loadShops();
+            
+            // 绑定搜索事件
+            bindSearchEvents();
+        });
+        
+        // 加载商家列表
+        async function loadShops(keyword = '', type = '') {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const shopListContent = document.getElementById('shopListContent');
+            
+            loadingState.style.display = 'block';
+            emptyState.style.display = 'none';
+            shopListContent.innerHTML = '';
+            
+            try {
+                const shops = await getShops({ keyword });
+                
+                loadingState.style.display = 'none';
+                
+                if (shops.length === 0) {
+                    emptyState.style.display = 'flex';
+                    return;
+                }
+                
+                // 渲染商家列表
+                shopListContent.innerHTML = shops.map(shop => `
+                    <div class="shop-card" onclick="location.href='shop.html?id=${shop.id}'">
+                        <div class="shop-image">
+                            ${shop.images && shop.images.length > 0 
+                                ? `<img src="${shop.images[0]}" alt="${shop.name}">`
+                                : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;">🏂</div>`
+                            }
+                        </div>
+                        <div class="shop-info">
+                            <div class="shop-name">${shop.name}</div>
+                            <div class="shop-desc">${shop.description || '专业雪板租赁服务'}</div>
+                            <div class="shop-meta">
+                                <span class="shop-rating">⭐ ${shop.rating || '5.0'}</span>
+                                <span class="shop-location">📍 ${formatLocation(shop.location)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (e) {
+                loadingState.style.display = 'none';
+                emptyState.style.display = 'flex';
+                console.error('加载商家失败:', e);
+            }
+        }
+        
+        // 格式化地址
+        function formatLocation(location) {
+            if (!location) return '未知地址';
+            // 截取市/区部分
+            const parts = location.split(/[市区县]/);
+            if (parts.length > 1) {
+                return parts[0] + parts[1].substring(0, 4) + '...';
+            }
+            return location.substring(0, 10) + '...';
+        }
+        
+        // 绑定搜索事件
+        function bindSearchEvents() {
+            const searchInput = document.getElementById('searchInput');
+            const searchTabs = document.querySelectorAll('.search-tab');
+            
+            // 搜索输入
+            let searchTimer;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    loadShops(this.value);
+                }, 500);
+            });
+            
+            // 类型筛选
+            searchTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    searchTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    loadShops(searchInput.value);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

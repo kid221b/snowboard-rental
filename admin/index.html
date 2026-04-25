@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>工作台 - 商家管理</title>
+    <link rel="stylesheet" href="../public/css/common.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="page" style="padding-bottom: 70px;">
+        <!-- 头部 -->
+        <div class="admin-header">
+            <div class="admin-header-title">工作台</div>
+            <div class="admin-header-user">
+                <div>
+                    <div class="admin-header-shop shop-name-display">加载中...</div>
+                    <div class="admin-header-phone admin-phone" style="font-size: 12px; opacity: 0.7;"></div>
+                </div>
+                <button class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: #fff;" onclick="adminLogout()">退出</button>
+            </div>
+        </div>
+        
+        <!-- 内容区域 -->
+        <div class="container" style="padding-top: 16px;">
+            <!-- 统计卡片 -->
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="todayOrders">0</div>
+                    <div class="stat-label">今日订单</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value warning" id="pendingOrders">0</div>
+                    <div class="stat-label">待处理</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalEquipment">0</div>
+                    <div class="stat-label">装备数量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value success" id="monthIncome">¥0</div>
+                    <div class="stat-label">本月收入</div>
+                </div>
+            </div>
+            
+            <!-- 今日订单 -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <div class="admin-card-title">今日订单</div>
+                    <a href="orders.html" style="color: #1890ff; font-size: 13px;">查看全部 →</a>
+                </div>
+                
+                <div id="todayOrdersList">
+                    <div class="admin-empty">
+                        <div class="admin-empty-icon">📋</div>
+                        <div class="admin-empty-text">暂无订单</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部导航 -->
+    <div class="admin-tab-bar">
+        <div class="admin-tab-item active">
+            <span class="icon">📊</span>
+            <span class="text">工作台</span>
+        </div>
+        <div class="admin-tab-item" onclick="location.href='equipment.html'">
+            <span class="icon">🎿</span>
+            <span class="text">装备</span>
+        </div>
+        <div class="admin-tab-item" onclick="location.href='orders.html'">
+            <span class="icon">📋</span>
+            <span class="text">订单</span>
+        </div>
+        <div class="admin-tab-item" onclick="location.href='settings.html'">
+            <span class="icon">⚙️</span>
+            <span class="text">设置</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../public/js/supabase-client.js"></script>
+    <script src="../public/js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        let currentSession = null;
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            currentSession = checkAdminAuth();
+            if (!currentSession) return;
+            
+            updateAdminUI(currentSession);
+            await loadStatistics();
+            await loadTodayOrders();
+        });
+        
+        // 加载统计数据
+        async function loadStatistics() {
+            const stats = await getStatistics(currentSession.shop_id);
+            
+            document.getElementById('todayOrders').textContent = stats.todayOrders;
+            document.getElementById('pendingOrders').textContent = stats.pendingOrders;
+            document.getElementById('totalEquipment').textContent = stats.totalEquipment;
+            document.getElementById('monthIncome').textContent = `¥${formatMoney(stats.monthIncome)}`;
+        }
+        
+        // 加载今日订单
+        async function loadTodayOrders() {
+            const orders = await getTodayOrders(currentSession.shop_id);
+            const ordersList = document.getElementById('todayOrdersList');
+            
+            if (orders.length === 0) {
+                ordersList.innerHTML = `
+                    <div class="admin-empty">
+                        <div class="admin-empty-icon">📋</div>
+                        <div class="admin-empty-text">暂无订单</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            ordersList.innerHTML = orders.slice(0, 5).map(order => {
+                const statusInfo = getOrderStatusInfo(order.status);
+                const equipment = order.equipment || {};
+                const user = order.users || {};
+                
+                return `
+                    <div class="admin-list-item" onclick="location.href='orders.html'">
+                        <div class="admin-list-item-content">
+                            <div class="admin-list-item-title">${equipment.name || '装备'}</div>
+                            <div class="admin-list-item-desc">
+                                ${user.phone || '游客'} · ${formatDate(order.created_at, 'HH:mm')}
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="order-admin-price" style="font-size: 14px;">¥${formatMoney(order.total_price)}</span>
+                            <span class="status-tag ${'status-' + order.status}">${statusInfo.text}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>

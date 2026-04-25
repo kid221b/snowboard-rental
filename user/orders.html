@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>我的订单 - 雪板租赁</title>
+    <link rel="stylesheet" href="../public/css/common.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="page">
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <div class="navbar">
+                <div class="navbar-left">
+                    <span class="icon" onclick="history.back()">←</span>
+                </div>
+                <div class="navbar-title">我的订单</div>
+                <div class="navbar-right"></div>
+            </div>
+        </div>
+        
+        <!-- 订单列表 -->
+        <div class="container">
+            <div id="orderList">
+                <!-- 加载中 -->
+                <div class="empty-state" id="loadingState">
+                    <div class="text">加载中...</div>
+                </div>
+                
+                <!-- 未登录状态 -->
+                <div class="empty-state" id="loginState" style="display: none;">
+                    <div class="icon">👤</div>
+                    <div class="text">请先登录查看订单</div>
+                    <button class="btn btn-primary mt-16" onclick="location.href='login.html'">去登录</button>
+                </div>
+                
+                <!-- 空状态 -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="icon">📋</div>
+                    <div class="text">暂无订单</div>
+                    <button class="btn btn-default mt-16" onclick="location.href='index.html'">去租赁</button>
+                </div>
+                
+                <!-- 订单列表内容 -->
+                <div id="orderListContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部导航 -->
+    <div class="tab-bar">
+        <div class="tab-item" onclick="location.href='index.html'">
+            <span class="icon">🏪</span>
+            <span class="text">首页</span>
+        </div>
+        <div class="tab-item active">
+            <span class="icon">📋</span>
+            <span class="text">订单</span>
+        </div>
+        <div class="tab-item" onclick="location.href='login.html'">
+            <span class="icon">👤</span>
+            <span class="text">我的</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../public/js/supabase-client.js"></script>
+    <script src="../public/js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        let currentUser = null;
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initAuth();
+            currentUser = getCurrentUserInfo();
+            
+            const loginState = document.getElementById('loginState');
+            const loadingState = document.getElementById('loadingState');
+            
+            if (!currentUser) {
+                loadingState.style.display = 'none';
+                loginState.style.display = 'flex';
+                return;
+            }
+            
+            await loadOrders();
+        });
+        
+        // 加载订单列表
+        async function loadOrders() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const orderListContent = document.getElementById('orderListContent');
+            
+            loadingState.style.display = 'block';
+            
+            try {
+                const orders = await getOrderList(currentUser?.id);
+                
+                loadingState.style.display = 'none';
+                
+                if (orders.length === 0) {
+                    emptyState.style.display = 'flex';
+                    return;
+                }
+                
+                orderListContent.innerHTML = orders.map(order => {
+                    const statusInfo = getOrderStatusInfo(order.status);
+                    const equipment = order.equipment || {};
+                    const shop = order.shops || {};
+                    
+                    return `
+                        <div class="order-card" onclick="showOrderDetail('${order.id}')">
+                            <div class="order-header">
+                                <div class="order-shop-name">${shop.name || '商家'}</div>
+                                <span class="order-status" style="background: ${statusInfo.bgColor}; color: ${statusInfo.color};">
+                                    ${statusInfo.text}
+                                </span>
+                            </div>
+                            <div class="order-content">
+                                <div class="order-image">
+                                    ${equipment.images && equipment.images.length > 0 
+                                        ? `<img src="${equipment.images[0]}" alt="${equipment.name}">`
+                                        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px;">🏂</div>`
+                                    }
+                                </div>
+                                <div class="order-info">
+                                    <div class="order-equipment-name">${equipment.name || '装备'}</div>
+                                    <div class="order-dates">${formatDate(order.start_date, 'MM-DD')} 至 ${formatDate(order.end_date, 'MM-DD')} · ${order.days}天</div>
+                                    <div class="order-price">¥${formatMoney(order.total_price)}</div>
+                                </div>
+                            </div>
+                            <div class="order-actions">
+                                ${order.status === 'pending' ? `
+                                    <button class="btn btn-default btn-sm" onclick="event.stopPropagation(); cancelOrderHandler('${order.id}')">取消订单</button>
+                                    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); payOrderHandler('${order.id}')">去支付</button>
+                                ` : ''}
+                                ${order.status === 'confirmed' || order.status === 'rented' ? `
+                                    <button class="btn btn-default btn-sm" onclick="event.stopPropagation(); contactShop('${shop.phone}')">联系商家</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (e) {
+                loadingState.style.display = 'none';
+                console.error('加载订单失败:', e);
+                showToast('加载失败', 'error');
+            }
+        }
+        
+        // 显示订单详情
+        function showOrderDetail(orderId) {
+            location.href = `order-detail.html?id=${orderId}`;
+        }
+        
+        // 取消订单
+        async function cancelOrderHandler(orderId) {
+            if (!confirm('确定要取消该订单吗？')) return;
+            
+            const success = await cancelOrder(orderId);
+            if (success) {
+                await loadOrders();
+            }
+        }
+        
+        // 支付订单
+        async function payOrderHandler(orderId) {
+            // 预留支付接口
+            showToast('支付功能配置中', 'info');
+        }
+        
+        // 联系商家
+        function contactShop(phone) {
+            if (phone) {
+                window.location.href = `tel:${phone}`;
+            } else {
+                showToast('商家电话暂无', 'info');
+            }
+        }
+    </script>
+</body>
+</html>

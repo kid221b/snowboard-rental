@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>登录注册 - 雪板租赁</title>
+    <link rel="stylesheet" href="../public/css/common.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="login-container">
+        <!-- 登录头部 -->
+        <div class="login-header">
+            <div class="login-logo">🏂</div>
+            <div class="login-title">雪板租赁</div>
+            <div class="login-subtitle">专业雪板装备租赁平台</div>
+        </div>
+        
+        <!-- 登录/注册切换标签 -->
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="loginTab" onclick="switchMode('login')">登录</button>
+            <button class="auth-tab" id="registerTab" onclick="switchMode('register')">注册</button>
+        </div>
+        
+        <!-- 登录表单 -->
+        <div class="login-form">
+            <!-- 邮箱 -->
+            <div class="input-group">
+                <label class="input-label">邮箱</label>
+                <input type="email" id="email" class="input" placeholder="请输入邮箱地址">
+            </div>
+            
+            <!-- 密码 -->
+            <div class="input-group">
+                <label class="input-label">密码</label>
+                <input type="password" id="password" class="input" placeholder="请输入密码">
+            </div>
+            
+            <!-- 确认密码（注册时显示） -->
+            <div class="input-group" id="confirmPasswordGroup" style="display: none;">
+                <label class="input-label">确认密码</label>
+                <input type="password" id="confirmPassword" class="input" placeholder="请再次输入密码">
+            </div>
+            
+            <!-- 登录按钮 -->
+            <button class="btn btn-primary btn-block btn-lg mt-16" id="submitBtn" onclick="doSubmit()">
+                登录
+            </button>
+            
+            <!-- 忘记密码（仅登录时显示） -->
+            <div class="text-right mt-12" id="forgotPasswordLink" style="display: none;">
+                <a href="#" onclick="showForgotPassword()" style="color: #1890ff; font-size: 13px;">忘记密码？</a>
+            </div>
+            
+            <!-- 用户协议 -->
+            <div class="text-center text-light mt-16" style="font-size: 12px;">
+                注册即表示同意<a href="#">《用户协议》</a>和<a href="#">《隐私政策》</a>
+            </div>
+            
+            <!-- 商家入口 -->
+            <div class="text-center mt-24">
+                <a href="../admin/login.html" style="color: #999; font-size: 13px;">商家登录 →</a>
+            </div>
+        </div>
+        
+        <!-- 邮箱确认提示（注册后显示） -->
+        <div class="email-confirm-tip" id="emailConfirmTip" style="display: none;">
+            <div class="tip-icon">📧</div>
+            <div class="tip-title">请查收确认邮件</div>
+            <div class="tip-content">我们已向 <span id="sentEmail"></span> 发送了一封确认邮件，请点击邮件中的链接完成注册。</div>
+            <button class="btn btn-outline btn-block mt-16" onclick="switchMode('login')">返回登录</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../public/js/supabase-client.js"></script>
+    <script src="../public/js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        let currentMode = 'login'; // login 或 register
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 检查是否已登录
+            await initAuth();
+            const user = getCurrentUserInfo();
+            
+            if (user) {
+                // 已登录，跳转到首页
+                showToast('已登录', 'success');
+                setTimeout(() => {
+                    location.href = 'index.html';
+                }, 1000);
+            }
+        });
+        
+        // 切换登录/注册模式
+        function switchMode(mode) {
+            currentMode = mode;
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const submitBtn = document.getElementById('submitBtn');
+            const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
+            const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+            const emailConfirmTip = document.getElementById('emailConfirmTip');
+            const loginForm = document.querySelector('.login-form');
+            
+            // 隐藏确认提示
+            emailConfirmTip.style.display = 'none';
+            loginForm.style.display = 'block';
+            
+            if (mode === 'login') {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                submitBtn.textContent = '登录';
+                confirmPasswordGroup.style.display = 'none';
+                forgotPasswordLink.style.display = 'block';
+            } else {
+                loginTab.classList.remove('active');
+                registerTab.classList.add('active');
+                submitBtn.textContent = '注册';
+                confirmPasswordGroup.style.display = 'block';
+                forgotPasswordLink.style.display = 'none';
+            }
+            
+            // 清空表单
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+        
+        // 提交表单
+        async function doSubmit() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            // 验证邮箱
+            if (!email) {
+                showToast('请输入邮箱', 'error');
+                return;
+            }
+            if (!validateEmail(email)) {
+                showToast('请输入正确的邮箱格式', 'error');
+                return;
+            }
+            
+            // 验证密码
+            if (!password) {
+                showToast('请输入密码', 'error');
+                return;
+            }
+            if (password.length < 6) {
+                showToast('密码长度至少6位', 'error');
+                return;
+            }
+            
+            // 注册模式需要验证确认密码
+            if (currentMode === 'register') {
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                if (password !== confirmPassword) {
+                    showToast('两次输入的密码不一致', 'error');
+                    return;
+                }
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = currentMode === 'login' ? '登录中...' : '注册中...';
+            
+            let success;
+            if (currentMode === 'login') {
+                success = await doEmailLogin(email, password);
+            } else {
+                success = await doEmailRegister(email, password);
+            }
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = currentMode === 'login' ? '登录' : '注册';
+        }
+        
+        // 显示忘记密码提示
+        function showForgotPassword() {
+            const email = document.getElementById('email').value.trim();
+            if (!email) {
+                showToast('请先输入邮箱', 'error');
+                return;
+            }
+            if (!validateEmail(email)) {
+                showToast('请输入正确的邮箱格式', 'error');
+                return;
+            }
+            
+            showToast('密码重置邮件已发送，请查收', 'success');
+        }
+    </script>
+</body>
+</html>

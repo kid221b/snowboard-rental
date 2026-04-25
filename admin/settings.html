@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>商家设置 - 商家管理</title>
+    <link rel="stylesheet" href="../public/css/common.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="page" style="padding-bottom: 70px;">
+        <!-- 头部 -->
+        <div class="admin-header">
+            <div class="admin-header-title">商家设置</div>
+            <button class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: #fff;" onclick="adminLogout()">退出</button>
+        </div>
+        
+        <!-- 内容区域 -->
+        <div class="container" style="padding-top: 16px;">
+            <!-- 商家信息 -->
+            <div class="settings-section">
+                <div class="form-section-title">商家信息</div>
+                
+                <div class="input-group">
+                    <label class="input-label">商家名称</label>
+                    <input type="text" id="shopName" class="input" placeholder="请输入商家名称">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">联系电话</label>
+                    <input type="tel" id="shopPhone" class="input" placeholder="请输入联系电话">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">营业时间</label>
+                    <input type="text" id="businessHours" class="input" placeholder="如：08:00-18:00">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">地址</label>
+                    <input type="text" id="location" class="input" placeholder="请输入地址">
+                </div>
+            </div>
+            
+            <!-- 商家介绍 -->
+            <div class="settings-section">
+                <div class="form-section-title">商家介绍</div>
+                <textarea id="description" class="input" placeholder="介绍一下您的店铺..." rows="4"></textarea>
+            </div>
+            
+            <!-- 保存按钮 -->
+            <button class="btn btn-primary btn-block btn-lg mt-16" id="saveBtn" onclick="saveShopInfo()">
+                保存修改
+            </button>
+            
+            <!-- 退出登录 -->
+            <button class="btn btn-default btn-block mt-12" onclick="adminLogout()">
+                退出登录
+            </button>
+        </div>
+    </div>
+    
+    <!-- 底部导航 -->
+    <div class="admin-tab-bar">
+        <div class="admin-tab-item" onclick="location.href='index.html'">
+            <span class="icon">📊</span>
+            <span class="text">工作台</span>
+        </div>
+        <div class="admin-tab-item" onclick="location.href='equipment.html'">
+            <span class="icon">🎿</span>
+            <span class="text">装备</span>
+        </div>
+        <div class="admin-tab-item" onclick="location.href='orders.html'">
+            <span class="icon">📋</span>
+            <span class="text">订单</span>
+        </div>
+        <div class="admin-tab-item active">
+            <span class="icon">⚙️</span>
+            <span class="text">设置</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../public/js/supabase-client.js"></script>
+    <script src="../public/js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        let currentSession = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            currentSession = checkAdminAuth();
+            if (!currentSession) return;
+            
+            loadShopInfo();
+        });
+        
+        // 加载商家信息
+        function loadShopInfo() {
+            const shop = currentSession.shop;
+            
+            document.getElementById('shopName').value = shop.name || '';
+            document.getElementById('shopPhone').value = shop.phone || '';
+            document.getElementById('businessHours').value = shop.business_hours || '';
+            document.getElementById('location').value = shop.location || '';
+            document.getElementById('description').value = shop.description || '';
+        }
+        
+        // 保存商家信息
+        async function saveShopInfo() {
+            const shopData = {
+                name: document.getElementById('shopName').value.trim(),
+                phone: document.getElementById('shopPhone').value.trim(),
+                business_hours: document.getElementById('businessHours').value.trim(),
+                location: document.getElementById('location').value.trim(),
+                description: document.getElementById('description').value.trim(),
+                images: currentSession.shop.images || []
+            };
+            
+            if (!shopData.name) {
+                showToast('请输入商家名称', 'error');
+                return;
+            }
+            
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '保存中...';
+            
+            const success = await updateShopInfo(currentSession.shop_id, shopData);
+            
+            saveBtn.disabled = false;
+            saveBtn.textContent = '保存修改';
+            
+            if (success) {
+                // 更新页面显示
+                updateAdminUI(getAdminSession());
+            }
+        }
+    </script>
+</body>
+</html>

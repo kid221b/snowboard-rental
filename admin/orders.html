@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>订单管理 - 商家管理</title>
+    <link rel="stylesheet" href="../public/css/common.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="page" style="padding-bottom: 70px;">
+        <!-- 头部 -->
+        <div class="admin-header">
+            <div class="admin-header-title">订单管理</div>
+        </div>
+        
+        <!-- 内容区域 -->
+        <div class="container" style="padding-top: 16px;">
+            <!-- 筛选 -->
+            <div class="filter-tabs" id="filterTabs">
+                <span class="filter-tab active" data-status="">全部</span>
+                <span class="filter-tab" data-status="pending">待支付</span>
+                <span class="filter-tab" data-status="confirmed">已确认</span>
+                <span class="filter-tab" data-status="rented">已出租</span>
+                <span class="filter-tab" data-status="completed">已完成</span>
+            </div>
+            
+            <!-- 订单列表 -->
+            <div id="orderList">
+                <div class="admin-empty" id="loadingState">
+                    <div class="admin-empty-icon">⏳</div>
+                    <div class="admin-empty-text">加载中...</div>
+                </div>
+                
+                <div class="admin-empty" id="emptyState" style="display: none;">
+                    <div class="admin-empty-icon">📋</div>
+                    <div class="admin-empty-text">暂无订单</div>
+                </div>
+                
+                <div id="orderListContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部导航 -->
+    <div class="admin-tab-bar">
+        <div class="admin-tab-item" onclick="location.href='index.html'">
+            <span class="icon">📊</span>
+            <span class="text">工作台</span>
+        </div>
+        <div class="admin-tab-item" onclick="location.href='equipment.html'">
+            <span class="icon">🎿</span>
+            <span class="text">装备</span>
+        </div>
+        <div class="admin-tab-item active">
+            <span class="icon">📋</span>
+            <span class="text">订单</span>
+        </div>
+        <div class="admin-tab-item" onclick="location.href='settings.html'">
+            <span class="icon">⚙️</span>
+            <span class="text">设置</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../public/js/supabase-client.js"></script>
+    <script src="../public/js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        let currentSession = null;
+        let currentStatus = '';
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            currentSession = checkAdminAuth();
+            if (!currentSession) return;
+            
+            await loadOrders();
+            bindFilterEvents();
+        });
+        
+        // 加载订单列表
+        async function loadOrders() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const content = document.getElementById('orderListContent');
+            
+            loadingState.style.display = 'block';
+            emptyState.style.display = 'none';
+            content.innerHTML = '';
+            
+            try {
+                const orders = await getAdminOrderList(currentSession.shop_id, currentStatus);
+                
+                loadingState.style.display = 'none';
+                
+                if (orders.length === 0) {
+                    emptyState.style.display = 'flex';
+                    return;
+                }
+                
+                content.innerHTML = orders.map(order => {
+                    const statusInfo = getOrderStatusInfo(order.status);
+                    const equipment = order.equipment || {};
+                    const user = order.users || {};
+                    
+                    return `
+                        <div class="order-admin-card">
+                            <div class="order-admin-header">
+                                <div class="order-admin-no">订单号: ${order.order_no}</div>
+                                <span class="status-tag ${'status-' + order.status}">${statusInfo.text}</span>
+                            </div>
+                            <div class="order-admin-content">
+                                <div class="order-admin-equipment">
+                                    <div class="order-admin-equipment-name">${equipment.name || '装备'}</div>
+                                    <div class="order-admin-dates">
+                                        ${formatDate(order.start_date, 'YYYY-MM-DD')} 至 ${formatDate(order.end_date, 'YYYY-MM-DD')} · ${order.days}天
+                                    </div>
+                                    <div class="order-admin-price">¥${formatMoney(order.total_price)}</div>
+                                </div>
+                                <div class="order-admin-user">
+                                    <div class="order-admin-user-name">${user.nickname || '游客'}</div>
+                                    <div class="order-admin-user-phone">${order.phone}</div>
+                                    <div style="font-size: 12px; color: #999; margin-top: 4px;">
+                                        ${formatDate(order.created_at, 'MM-DD HH:mm')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="order-admin-actions">
+                                ${getActionsHtml(order)}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (e) {
+                loadingState.style.display = 'none';
+                console.error('加载失败:', e);
+            }
+        }
+        
+        // 获取操作按钮HTML
+        function getActionsHtml(order) {
+            switch (order.status) {
+                case 'pending':
+                    return `
+                        <button class="btn btn-sm" style="color: #999;" onclick="cancelOrderHandler('${order.id}')">取消</button>
+                        <button class="btn btn-sm btn-primary" onclick="confirmOrder('${order.id}')">确认</button>
+                    `;
+                case 'confirmed':
+                    return `
+                        <button class="btn btn-sm btn-primary" onclick="startRent('${order.id}')">开始出租</button>
+                    `;
+                case 'rented':
+                    return `
+                        <button class="btn btn-sm btn-primary" onclick="completeOrder('${order.id}')">完成租赁</button>
+                    `;
+                case 'completed':
+                    return `<span style="color: #999; font-size: 13px;">已完成</span>`;
+                case 'cancelled':
+                    return `<span style="color: #999; font-size: 13px;">已取消</span>`;
+                default:
+                    return '';
+            }
+        }
+        
+        // 绑定筛选事件
+        function bindFilterEvents() {
+            const tabs = document.querySelectorAll('.filter-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentStatus = this.dataset.status;
+                    loadOrders();
+                });
+            });
+        }
+        
+        // 确认订单
+        async function confirmOrder(orderId) {
+            const success = await updateOrderStatus(orderId, 'confirmed');
+            if (success) {
+                await loadOrders();
+            }
+        }
+        
+        // 开始出租
+        async function startRent(orderId) {
+            const success = await updateOrderStatus(orderId, 'rented');
+            if (success) {
+                await loadOrders();
+            }
+        }
+        
+        // 完成订单
+        async function completeOrder(orderId) {
+            const success = await updateOrderStatus(orderId, 'completed');
+            if (success) {
+                await loadOrders();
+            }
+        }
+        
+        // 取消订单
+        async function cancelOrderHandler(orderId) {
+            if (!confirm('确定要取消该订单吗？')) return;
+            
+            const success = await updateOrderStatus(orderId, 'cancelled');
+            if (success) {
+                await loadOrders();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>预约下单 - 雪板租赁</title>
+    <link rel="stylesheet" href="../public/css/common.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="page">
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <div class="navbar">
+                <div class="navbar-left">
+                    <span class="icon" onclick="history.back()">←</span>
+                </div>
+                <div class="navbar-title">预约租赁</div>
+                <div class="navbar-right"></div>
+            </div>
+        </div>
+        
+        <!-- 装备信息 -->
+        <div class="container">
+            <div class="card" style="display: flex; align-items: center;">
+                <div class="equipment-image" id="equipmentImage" style="width: 80px; height: 80px; flex-shrink: 0;">
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;">🏂</div>
+                </div>
+                <div class="equipment-info" style="margin-left: 12px;">
+                    <div class="equipment-name" id="equipmentName">-</div>
+                    <div class="equipment-price" id="equipmentPrice">¥0<span>/天</span></div>
+                </div>
+            </div>
+            
+            <!-- 选择日期 -->
+            <div class="booking-section">
+                <div class="section-title">
+                    租赁日期<span class="required">*</span>
+                </div>
+                <div class="date-picker">
+                    <div class="date-input">
+                        <label class="input-label">开始日期</label>
+                        <input type="date" id="startDate" class="input">
+                    </div>
+                    <div class="date-arrow" style="display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 20px;">
+                        →
+                    </div>
+                    <div class="date-input">
+                        <label class="input-label">结束日期</label>
+                        <input type="date" id="endDate" class="input">
+                    </div>
+                </div>
+                <div class="mt-12 text-secondary text-center">
+                    共 <span id="daysCount" style="color: #1890ff; font-weight: 600;">1</span> 天
+                </div>
+            </div>
+            
+            <!-- 联系信息 -->
+            <div class="booking-section">
+                <div class="section-title">
+                    联系信息<span class="required">*</span>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">手机号</label>
+                    <input type="tel" id="phone" class="input" placeholder="请输入手机号" maxlength="11">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">姓名（选填）</label>
+                    <input type="text" id="userName" class="input" placeholder="请输入姓名">
+                </div>
+            </div>
+            
+            <!-- 备注 -->
+            <div class="booking-section">
+                <div class="section-title">备注</div>
+                <textarea id="notes" class="input" placeholder="如有特殊需求请备注" rows="3"></textarea>
+            </div>
+            
+            <!-- 费用明细 -->
+            <div class="booking-section">
+                <div class="section-title">费用明细</div>
+                <div class="order-summary">
+                    <div class="summary-row">
+                        <span>租赁单价</span>
+                        <span id="unitPrice">¥0/天</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>租赁天数</span>
+                        <span id="summaryDays">1天</span>
+                    </div>
+                    <div class="summary-row summary-total">
+                        <span>应付金额</span>
+                        <span id="totalAmount">¥0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部支付按钮 -->
+    <div class="fixed-bottom">
+        <button class="btn btn-primary btn-block btn-lg" id="submitBtn" onclick="submitOrder()">
+            提交订单
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../public/js/supabase-client.js"></script>
+    <script src="../public/js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        let equipmentData = {
+            id: '',
+            shop_id: '',
+            price_day: 0,
+            name: '',
+            image: ''
+        };
+        
+        let totalDays = 1;
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 获取URL参数
+            equipmentData.id = getUrlParam('equipment_id') || '';
+            equipmentData.shop_id = getUrlParam('shop_id') || '';
+            equipmentData.price_day = parseFloat(getUrlParam('price_day')) || 0;
+            equipmentData.name = getUrlParam('name') || '';
+            equipmentData.image = getUrlParam('image') || '';
+            
+            if (!equipmentData.id || !equipmentData.shop_id) {
+                showToast('参数错误', 'error');
+                history.back();
+                return;
+            }
+            
+            await initAuth();
+            initPage();
+            initDatePicker();
+            bindEvents();
+        });
+        
+        // 初始化页面
+        function initPage() {
+            document.getElementById('equipmentName').textContent = equipmentData.name;
+            document.getElementById('equipmentPrice').innerHTML = `¥${formatMoney(equipmentData.price_day)}<span>/天</span>`;
+            
+            if (equipmentData.image) {
+                document.getElementById('equipmentImage').innerHTML = `<img src="${equipmentData.image}" alt="${equipmentData.name}">`;
+            }
+            
+            document.getElementById('unitPrice').textContent = `¥${formatMoney(equipmentData.price_day)}/天`;
+            
+            // 如果已登录，填充用户信息
+            const user = getCurrentUserInfo();
+            if (user) {
+                // 优先使用 profile 中保存的手机号
+                if (user.profile?.phone) {
+                    document.getElementById('phone').value = user.profile.phone;
+                }
+            }
+        }
+        
+        // 初始化日期选择器
+        function initDatePicker() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const startDate = document.getElementById('startDate');
+            const endDate = document.getElementById('endDate');
+            
+            // 设置最小日期为今天
+            const todayStr = formatDate(today, 'YYYY-MM-DD');
+            const tomorrowStr = formatDate(tomorrow, 'YYYY-MM-DD');
+            
+            startDate.min = todayStr;
+            startDate.value = todayStr;
+            
+            endDate.min = tomorrowStr;
+            endDate.value = tomorrowStr;
+            
+            // 默认1天
+            totalDays = 1;
+            updateSummary();
+        }
+        
+        // 绑定事件
+        function bindEvents() {
+            const startDate = document.getElementById('startDate');
+            const endDate = document.getElementById('endDate');
+            
+            startDate.addEventListener('change', function() {
+                // 确保结束日期不早于开始日期
+                if (endDate.value && this.value > endDate.value) {
+                    endDate.value = this.value;
+                }
+                endDate.min = this.value;
+                calculateDays();
+            });
+            
+            endDate.addEventListener('change', calculateDays);
+        }
+        
+        // 计算天数
+        function calculateDays() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (startDate && endDate) {
+                totalDays = daysBetween(startDate, endDate);
+                document.getElementById('daysCount').textContent = totalDays;
+                updateSummary();
+            }
+        }
+        
+        // 更新费用明细
+        function updateSummary() {
+            document.getElementById('summaryDays').textContent = `${totalDays}天`;
+            const total = equipmentData.price_day * totalDays;
+            document.getElementById('totalAmount').textContent = `¥${formatMoney(total)}`;
+        }
+        
+        // 提交订单
+        async function submitOrder() {
+            const phone = document.getElementById('phone').value.trim();
+            const userName = document.getElementById('userName').value.trim();
+            const notes = document.getElementById('notes').value.trim();
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            // 验证手机号
+            if (!validatePhone(phone)) {
+                showToast('请输入正确的手机号', 'error');
+                return;
+            }
+            
+            // 验证日期
+            if (!startDate || !endDate) {
+                showToast('请选择租赁日期', 'error');
+                return;
+            }
+            
+            const total = equipmentData.price_day * totalDays;
+            
+            // 创建订单
+            const orderData = {
+                shop_id: equipmentData.shop_id,
+                equipment_id: equipmentData.id,
+                start_date: startDate,
+                end_date: endDate,
+                days: totalDays,
+                unit_price: equipmentData.price_day,
+                total_price: total,
+                phone: phone,
+                user_name: userName,
+                notes: notes
+            };
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中...';
+            
+            const order = await createOrder(orderData);
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = '提交订单';
+            
+            if (order) {
+                showToast('订单创建成功', 'success');
+                
+                // 跳转到订单详情页面
+                setTimeout(() => {
+                    location.href = `orders.html`;
+                }, 1500);
+            }
+        }
+    </script>
+</body>
+</html>

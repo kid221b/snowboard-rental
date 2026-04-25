@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>装备编辑 - 商家管理</title>
+    <link rel="stylesheet" href="../public/css/common.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="page" style="padding-bottom: 80px;">
+        <!-- 头部 -->
+        <div class="page-header">
+            <div class="navbar">
+                <div class="navbar-left">
+                    <span class="icon" onclick="history.back()">←</span>
+                </div>
+                <div class="navbar-title" id="pageTitle">添加装备</div>
+                <div class="navbar-right"></div>
+            </div>
+        </div>
+        
+        <!-- 表单 -->
+        <div class="container" style="padding-top: 16px;">
+            <!-- 基本信息 -->
+            <div class="form-section">
+                <div class="form-section-title">基本信息</div>
+                
+                <div class="input-group">
+                    <label class="input-label">装备名称 <span style="color: #ff4d4f;">*</span></label>
+                    <input type="text" id="name" class="input" placeholder="如：Burton单板 2024款">
+                </div>
+                
+                <div class="form-row">
+                    <div class="input-group">
+                        <label class="input-label">类型 <span style="color: #ff4d4f;">*</span></label>
+                        <select id="type" class="form-select">
+                            <option value="snowboard">单板</option>
+                            <option value="ski">双板</option>
+                            <option value="accessory">配件</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">品牌</label>
+                        <input type="text" id="brand" class="input" placeholder="如：Burton">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 规格参数 -->
+            <div class="form-section">
+                <div class="form-section-title">规格参数</div>
+                
+                <div class="form-row">
+                    <div class="input-group">
+                        <label class="input-label">长度(cm)</label>
+                        <input type="number" id="length" class="input" placeholder="如：158">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">软硬度(1-10)</label>
+                        <input type="number" id="flex" class="input" placeholder="如：5" min="1" max="10">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">DIN值范围</label>
+                    <input type="text" id="dinRange" class="input" placeholder="如：2.5-10">
+                </div>
+            </div>
+            
+            <!-- 价格库存 -->
+            <div class="form-section">
+                <div class="form-section-title">价格与库存</div>
+                
+                <div class="form-row">
+                    <div class="input-group">
+                        <label class="input-label">日租价格(元) <span style="color: #ff4d4f;">*</span></label>
+                        <input type="number" id="priceDay" class="input" placeholder="如：150" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">周租价格(元)</label>
+                        <input type="number" id="priceWeek" class="input" placeholder="如：800" step="0.01">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">库存数量 <span style="color: #ff4d4f;">*</span></label>
+                    <input type="number" id="stock" class="input" placeholder="如：5" min="0">
+                </div>
+            </div>
+            
+            <!-- 详细描述 -->
+            <div class="form-section">
+                <div class="form-section-title">详细描述</div>
+                <textarea id="description" class="input" placeholder="描述装备特点、适用人群等..." rows="4"></textarea>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部保存按钮 -->
+    <div class="fixed-bottom">
+        <button class="btn btn-primary btn-block btn-lg" id="submitBtn" onclick="saveEquipment()">
+            保存
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../public/js/supabase-client.js"></script>
+    <script src="../public/js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        let currentSession = null;
+        let editId = '';
+        let editData = null;
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            currentSession = checkAdminAuth();
+            if (!currentSession) return;
+            
+            editId = getUrlParam('id');
+            
+            if (editId) {
+                document.getElementById('pageTitle').textContent = '编辑装备';
+                await loadEquipmentDetail();
+            }
+        });
+        
+        // 加载装备详情
+        async function loadEquipmentDetail() {
+            editData = await getAdminEquipmentDetail(editId);
+            
+            if (!editData) {
+                showToast('装备不存在', 'error');
+                history.back();
+                return;
+            }
+            
+            // 填充表单
+            document.getElementById('name').value = editData.name || '';
+            document.getElementById('type').value = editData.type || 'snowboard';
+            document.getElementById('brand').value = editData.brand || '';
+            document.getElementById('length').value = editData.length || '';
+            document.getElementById('flex').value = editData.flex || '';
+            document.getElementById('dinRange').value = editData.din_range || '';
+            document.getElementById('priceDay').value = editData.price_day || '';
+            document.getElementById('priceWeek').value = editData.price_week || '';
+            document.getElementById('stock').value = editData.stock || '';
+            document.getElementById('description').value = editData.description || '';
+        }
+        
+        // 保存装备
+        async function saveEquipment() {
+            const name = document.getElementById('name').value.trim();
+            const type = document.getElementById('type').value;
+            const brand = document.getElementById('brand').value.trim();
+            const length = parseInt(document.getElementById('length').value) || 0;
+            const flex = parseInt(document.getElementById('flex').value) || 0;
+            const din_range = document.getElementById('dinRange').value.trim();
+            const price_day = parseFloat(document.getElementById('priceDay').value) || 0;
+            const price_week = parseFloat(document.getElementById('priceWeek').value) || 0;
+            const stock = parseInt(document.getElementById('stock').value) || 0;
+            const description = document.getElementById('description').value.trim();
+            
+            // 验证
+            if (!name) {
+                showToast('请输入装备名称', 'error');
+                return;
+            }
+            
+            if (price_day <= 0) {
+                showToast('请输入正确的日租价格', 'error');
+                return;
+            }
+            
+            if (stock < 0) {
+                showToast('请输入正确的库存数量', 'error');
+                return;
+            }
+            
+            const equipmentData = {
+                shop_id: currentSession.shop_id,
+                name: name,
+                type: type,
+                brand: brand,
+                length: length,
+                flex: flex,
+                din_range: din_range,
+                price_day: price_day,
+                price_week: price_week,
+                stock: stock,
+                images: editData?.images || [],
+                description: description,
+                status: editData?.status || 'active'
+            };
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '保存中...';
+            
+            let success;
+            if (editId) {
+                success = await updateEquipment(editId, equipmentData);
+            } else {
+                const result = await createEquipment(equipmentData);
+                success = result !== null;
+                if (success) editId = result.id;
+            }
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = '保存';
+            
+            if (success) {
+                setTimeout(() => {
+                    history.back();
+                }, 1000);
+            }
+        }
+    </script>
+</body>
+</html>

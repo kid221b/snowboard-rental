@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>装备详情 - 雪板租赁</title>
+    <link rel="stylesheet" href="../public/css/common.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="page" style="padding-bottom: 80px;">
+        <!-- 页面头部 -->
+        <div class="page-header" style="background: transparent; box-shadow: none; position: absolute; width: 100%; z-index: 10;">
+            <div class="navbar" style="color: #fff;">
+                <div class="navbar-left">
+                    <span class="icon" onclick="history.back()" style="color: #fff;">←</span>
+                </div>
+                <div class="navbar-title"></div>
+                <div class="navbar-right"></div>
+            </div>
+        </div>
+        
+        <!-- 装备图片 -->
+        <div class="equipment-detail-banner" id="equipmentBanner">
+            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;">🏂</div>
+        </div>
+        
+        <!-- 装备详情内容 -->
+        <div class="equipment-detail-content">
+            <div class="equipment-detail-name" id="equipmentName">加载中...</div>
+            <div class="equipment-detail-brand" id="equipmentBrand">-</div>
+            <div class="equipment-detail-price">
+                <span id="priceDay">¥0</span><span>/天</span>
+            </div>
+            
+            <!-- 参数信息 -->
+            <div class="equipment-params" id="equipmentParams">
+                <!-- 动态生成 -->
+            </div>
+            
+            <!-- 商家信息 -->
+            <div class="card" id="shopCard" style="display: none; margin-top: 16px;">
+                <div class="card-header">
+                    <div class="card-title">租赁商家</div>
+                </div>
+                <div class="list-item" onclick="goToShop()">
+                    <div class="list-item-content">
+                        <div class="list-item-title" id="shopName">-</div>
+                        <div class="list-item-desc" id="shopLocation">-</div>
+                    </div>
+                    <div class="list-item-extra">→</div>
+                </div>
+            </div>
+            
+            <!-- 详细描述 -->
+            <div class="equipment-desc" id="equipmentDesc" style="display: none; margin-top: 16px;">
+                <div class="card-title mb-8">详细说明</div>
+                <div id="equipmentDescContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部预约按钮 -->
+    <div class="fixed-bottom">
+        <div class="price-display">
+            <span class="price" id="totalPrice">¥0</span>
+            <span class="unit">共 <span id="totalDays">1</span> 天</span>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" onclick="goBooking()">立即预约</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../public/js/supabase-client.js"></script>
+    <script src="../public/js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        let currentEquipment = null;
+        let bookingDays = 1;
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            const equipmentId = getUrlParam('id');
+            if (!equipmentId) {
+                showToast('参数错误', 'error');
+                history.back();
+                return;
+            }
+            
+            await initAuth();
+            await loadEquipmentDetail(equipmentId);
+        });
+        
+        // 加载装备详情
+        async function loadEquipmentDetail(equipmentId) {
+            try {
+                const equipment = await getEquipmentDetail(equipmentId);
+                
+                if (!equipment) {
+                    showToast('装备不存在', 'error');
+                    return;
+                }
+                
+                currentEquipment = equipment;
+                
+                // 基本信息
+                document.getElementById('equipmentName').textContent = equipment.name;
+                document.getElementById('equipmentBrand').textContent = `${equipment.brand || '未知品牌'} · ${getEquipmentTypeText(equipment.type)}`;
+                document.getElementById('priceDay').textContent = `¥${formatMoney(equipment.price_day)}`;
+                
+                // 更新价格显示
+                updatePrice();
+                
+                // 参数信息
+                const params = [];
+                if (equipment.length) params.push({ label: '长度', value: equipment.length + 'cm' });
+                if (equipment.flex) params.push({ label: '软硬度', value: equipment.flex + ' (1-10)' });
+                if (equipment.din_range) params.push({ label: 'DIN值', value: equipment.din_range });
+                if (equipment.price_week) params.push({ label: '周租价', value: '¥' + formatMoney(equipment.price_week) });
+                params.push({ label: '库存', value: equipment.stock + '件' });
+                
+                document.getElementById('equipmentParams').innerHTML = params.map(p => `
+                    <div class="param-item">
+                        <div class="param-label">${p.label}</div>
+                        <div class="param-value">${p.value}</div>
+                    </div>
+                `).join('');
+                
+                // 装备图片
+                if (equipment.images && equipment.images.length > 0) {
+                    document.getElementById('equipmentBanner').innerHTML = `<img src="${equipment.images[0]}" alt="${equipment.name}">`;
+                }
+                
+                // 详细描述
+                if (equipment.description) {
+                    document.getElementById('equipmentDesc').style.display = 'block';
+                    document.getElementById('equipmentDescContent').textContent = equipment.description;
+                }
+                
+                // 商家信息
+                if (equipment.shops) {
+                    document.getElementById('shopCard').style.display = 'block';
+                    document.getElementById('shopName').textContent = equipment.shops.name;
+                    document.getElementById('shopLocation').textContent = equipment.shops.location || '暂无地址';
+                    window.currentShop = equipment.shops;
+                }
+                
+                // 设置默认租赁天数
+                bookingDays = 1;
+                document.getElementById('totalDays').textContent = bookingDays;
+                updatePrice();
+                
+            } catch (e) {
+                console.error('加载装备详情失败:', e);
+                showToast('加载失败', 'error');
+            }
+        }
+        
+        // 更新价格显示
+        function updatePrice() {
+            if (!currentEquipment) return;
+            const total = currentEquipment.price_day * bookingDays;
+            document.getElementById('totalPrice').textContent = `¥${formatMoney(total)}`;
+            document.getElementById('totalDays').textContent = bookingDays;
+        }
+        
+        // 跳转到预约页面
+        function goBooking() {
+            if (!currentEquipment) return;
+            
+            // 检查登录状态
+            const user = getCurrentUserInfo();
+            if (!user) {
+                showToast('请先登录', 'info');
+                setTimeout(() => {
+                    location.href = `login.html?redirect=${encodeURIComponent(location.href)}`;
+                }, 1000);
+                return;
+            }
+            
+            const params = new URLSearchParams({
+                equipment_id: currentEquipment.id,
+                shop_id: currentEquipment.shop_id,
+                price_day: currentEquipment.price_day,
+                name: currentEquipment.name,
+                image: currentEquipment.images?.[0] || ''
+            });
+            
+            location.href = `booking.html?${params.toString()}`;
+        }
+        
+        // 跳转到商家页面
+        function goToShop() {
+            if (currentEquipment?.shop_id) {
+                location.href = `shop.html?id=${currentEquipment.shop_id}`;
+            }
+        }
+    </script>
+</body>
+</html>

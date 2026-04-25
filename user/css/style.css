@@ -1,0 +1,731 @@
+/**
+ * 用户端样式
+ * 雪板租赁平台
+ */
+
+/* ==================== 页面特定样式 ==================== */
+
+/* 首页样式 */
+.home-search {
+    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+    padding: 20px 16px;
+    margin: -16px -16px 16px -16px;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 22px;
+    padding: 10px 16px;
+}
+
+.search-box input {
+    flex: 1;
+    background: transparent;
+    color: #fff;
+    font-size: 14px;
+}
+
+.search-box input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.search-box .icon {
+    color: rgba(255, 255, 255, 0.7);
+    margin-right: 8px;
+}
+
+.search-tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.search-tab {
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    color: #fff;
+    font-size: 12px;
+}
+
+.search-tab.active {
+    background: #fff;
+    color: #1890ff;
+}
+
+/* 商家卡片 */
+.shop-card {
+    display: flex;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.shop-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.shop-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.shop-info {
+    flex: 1;
+    margin-left: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.shop-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.shop-desc {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.shop-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: auto;
+}
+
+.shop-rating {
+    color: #ff6b00;
+    font-size: 13px;
+}
+
+.shop-rating .icon {
+    margin-right: 2px;
+}
+
+.shop-location {
+    color: #999;
+    font-size: 12px;
+}
+
+/* 商家详情页 */
+.shop-header {
+    background: #fff;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.shop-banner {
+    width: 100%;
+    height: 180px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.shop-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.shop-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.shop-info-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #666;
+}
+
+.shop-info-item .icon {
+    margin-right: 8px;
+    color: #999;
+}
+
+/* 装备列表 */
+.equipment-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.filter-tag {
+    padding: 8px 16px;
+    background: #fff;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #666;
+    white-space: nowrap;
+    border: 1px solid #e8e8e8;
+}
+
+.filter-tag.active {
+    background: #1890ff;
+    color: #fff;
+    border-color: #1890ff;
+}
+
+.equipment-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.equipment-card {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.equipment-image {
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    overflow: hidden;
+}
+
+.equipment-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.equipment-info {
+    padding: 10px;
+}
+
+.equipment-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.equipment-brand {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 8px;
+}
+
+.equipment-price {
+    color: #ff4d4f;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.equipment-price span {
+    font-size: 12px;
+    font-weight: normal;
+}
+
+/* 装备详情页 */
+.equipment-detail-banner {
+    width: 100%;
+    height: 280px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+}
+
+.equipment-detail-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.equipment-detail-content {
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    margin-top: -20px;
+    position: relative;
+    padding: 20px 16px;
+}
+
+.equipment-detail-name {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.equipment-detail-brand {
+    font-size: 14px;
+    color: #999;
+    margin-bottom: 16px;
+}
+
+.equipment-detail-price {
+    font-size: 28px;
+    color: #ff4d4f;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.equipment-detail-price span {
+    font-size: 14px;
+    font-weight: normal;
+}
+
+.equipment-params {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.param-item {
+    background: #f5f5f5;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.param-label {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 4px;
+}
+
+.param-value {
+    font-size: 15px;
+    color: #333;
+    font-weight: 500;
+}
+
+.equipment-desc {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+    padding: 12px;
+    background: #fafafa;
+    border-radius: 8px;
+}
+
+/* 预约下单页 */
+.booking-section {
+    background: #fff;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.section-title .required {
+    color: #ff4d4f;
+    margin-left: 4px;
+}
+
+.date-picker {
+    display: flex;
+    gap: 12px;
+}
+
+.date-input {
+    flex: 1;
+}
+
+.date-input input {
+    width: 100%;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+.date-arrow {
+    display: flex;
+    align-items: center;
+    color: #999;
+}
+
+.order-summary {
+    background: #fff9f0;
+    padding: 16px;
+    border-radius: 12px;
+    margin-top: 12px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.summary-row:last-child {
+    margin-bottom: 0;
+}
+
+.summary-total {
+    font-size: 18px;
+    font-weight: 600;
+    color: #ff4d4f;
+    padding-top: 12px;
+    border-top: 1px dashed #e8e8e8;
+    margin-top: 8px;
+}
+
+/* 订单列表页 */
+.order-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.order-shop-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+.order-status {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.order-content {
+    display: flex;
+    padding: 12px 0;
+    border-top: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.order-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.order-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.order-info {
+    flex: 1;
+    margin-left: 12px;
+}
+
+.order-equipment-name {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.order-dates {
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 8px;
+}
+
+.order-price {
+    font-size: 16px;
+    color: #ff4d4f;
+    font-weight: 600;
+}
+
+.order-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+/* 登录页 */
+.login-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+    display: flex;
+    flex-direction: column;
+}
+
+.login-header {
+    padding: 60px 20px 40px;
+    text-align: center;
+    color: #fff;
+}
+
+.login-logo {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+}
+
+.login-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.login-subtitle {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.login-form {
+    flex: 1;
+    background: #fff;
+    border-radius: 24px 24px 0 0;
+    padding: 30px 20px;
+}
+
+.login-tabs {
+    display: flex;
+    margin-bottom: 30px;
+}
+
+.login-tab {
+    flex: 1;
+    text-align: center;
+    padding: 12px 0;
+    font-size: 16px;
+    color: #999;
+    border-bottom: 2px solid transparent;
+}
+
+.login-tab.active {
+    color: #1890ff;
+    border-bottom-color: #1890ff;
+}
+
+.verify-code-btn {
+    height: 32px;
+    padding: 0 12px;
+    background: #1890ff;
+    color: #fff;
+    border-radius: 16px;
+    font-size: 12px;
+    border: none;
+}
+
+.verify-code-btn:disabled {
+    background: #ccc;
+}
+
+/* 底部固定按钮 */
+.fixed-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px;
+    background: #fff;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    max-width: 750px;
+    margin: 0 auto;
+}
+
+.price-display {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 12px;
+}
+
+.price-display .price {
+    font-size: 24px;
+    color: #ff4d4f;
+    font-weight: 600;
+}
+
+.price-display .unit {
+    font-size: 14px;
+    color: #999;
+    margin-left: 4px;
+}
+
+/* ==================== 登录/注册页面样式 ==================== */
+
+/* 登录容器 */
+.login-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 40px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 登录头部 */
+.login-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.login-logo {
+    font-size: 64px;
+    margin-bottom: 12px;
+}
+
+.login-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.login-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* 登录表单卡片 */
+.login-form {
+    width: 100%;
+    max-width: 350px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* 登录/注册切换标签 */
+.auth-tabs {
+    display: flex;
+    width: 100%;
+    max-width: 350px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 16px;
+}
+
+.auth-tab {
+    flex: 1;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.auth-tab.active {
+    background: #fff;
+    color: #667eea;
+    font-weight: 600;
+}
+
+/* 输入组 */
+.input-group {
+    margin-bottom: 16px;
+}
+
+.input-label {
+    display: block;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.input-wrapper {
+    display: flex;
+    gap: 8px;
+}
+
+.input-wrapper .input {
+    flex: 1;
+}
+
+/* 邮箱确认提示 */
+.email-confirm-tip {
+    width: 100%;
+    max-width: 350px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+.email-confirm-tip .tip-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.email-confirm-tip .tip-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+}
+
+.email-confirm-tip .tip-content {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+}
+
+.email-confirm-tip .tip-content span {
+    color: #1890ff;
+    font-weight: 500;
+}
+
+/* 按钮样式扩展 */
+.btn-outline {
+    background: transparent;
+    border: 1px solid #ddd;
+    color: #666;
+}
+
+.btn-outline:active {
+    background: #f5f5f5;
+}

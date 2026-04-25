@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>商家详情 - 雪板租赁</title>
+    <link rel="stylesheet" href="../public/css/common.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="page">
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <div class="navbar">
+                <div class="navbar-left">
+                    <span class="icon" onclick="history.back()">←</span>
+                </div>
+                <div class="navbar-title" id="pageTitle">商家详情</div>
+                <div class="navbar-right"></div>
+            </div>
+        </div>
+        
+        <!-- 商家信息 -->
+        <div class="shop-header">
+            <div class="shop-banner" id="shopBanner">
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:64px;">🏂</div>
+            </div>
+            <div class="shop-title" id="shopName">加载中...</div>
+            <div class="shop-info-item">
+                <span class="icon">📍</span>
+                <span id="shopLocation">-</span>
+            </div>
+            <div class="shop-info-item">
+                <span class="icon">📞</span>
+                <span id="shopPhone">-</span>
+            </div>
+            <div class="shop-info-item">
+                <span class="icon">🕐</span>
+                <span id="shopHours">-</span>
+            </div>
+        </div>
+        
+        <!-- 商家描述 -->
+        <div class="card" id="shopDescCard" style="display: none;">
+            <div class="card-header">
+                <div class="card-title">商家介绍</div>
+            </div>
+            <div id="shopDescription"></div>
+        </div>
+        
+        <!-- 装备筛选 -->
+        <div class="container">
+            <div class="equipment-filter" id="equipmentFilter">
+                <span class="filter-tag active" data-type="">全部</span>
+                <span class="filter-tag" data-type="snowboard">单板</span>
+                <span class="filter-tag" data-type="ski">双板</span>
+                <span class="filter-tag" data-type="accessory">配件</span>
+            </div>
+            
+            <!-- 装备列表 -->
+            <div class="equipment-list" id="equipmentList">
+                <div class="empty-state" id="loadingState">
+                    <div class="text">加载中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../public/js/supabase-client.js"></script>
+    <script src="../public/js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        let currentShopId = '';
+        let currentEquipmentType = '';
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            currentShopId = getUrlParam('id');
+            if (!currentShopId) {
+                showToast('参数错误', 'error');
+                history.back();
+                return;
+            }
+            
+            await initAuth();
+            await loadShopDetail();
+            await loadEquipment();
+            bindFilterEvents();
+        });
+        
+        // 加载商家详情
+        async function loadShopDetail() {
+            try {
+                const shop = await getShopDetail(currentShopId);
+                
+                if (!shop) {
+                    showToast('商家不存在', 'error');
+                    return;
+                }
+                
+                document.getElementById('pageTitle').textContent = shop.name;
+                document.getElementById('shopName').textContent = shop.name;
+                document.getElementById('shopLocation').textContent = shop.location || '暂无地址';
+                document.getElementById('shopPhone').textContent = shop.phone || '暂无电话';
+                document.getElementById('shopHours').textContent = shop.business_hours || '暂无营业时间';
+                
+                // 商家描述
+                if (shop.description) {
+                    document.getElementById('shopDescCard').style.display = 'block';
+                    document.getElementById('shopDescription').textContent = shop.description;
+                }
+                
+                // 商家图片
+                if (shop.images && shop.images.length > 0) {
+                    document.getElementById('shopBanner').innerHTML = `<img src="${shop.images[0]}" alt="${shop.name}">`;
+                }
+                
+                // 保存店铺信息供后续使用
+                window.currentShop = shop;
+                
+            } catch (e) {
+                console.error('加载商家详情失败:', e);
+                showToast('加载失败', 'error');
+            }
+        }
+        
+        // 加载装备列表
+        async function loadEquipment() {
+            const equipmentList = document.getElementById('equipmentList');
+            const loadingState = document.getElementById('loadingState');
+            
+            loadingState.style.display = 'block';
+            
+            try {
+                const equipment = await getEquipmentList({
+                    shop_id: currentShopId,
+                    type: currentEquipmentType
+                });
+                
+                loadingState.style.display = 'none';
+                
+                if (equipment.length === 0) {
+                    equipmentList.innerHTML = `
+                        <div class="empty-state" style="grid-column: span 2;">
+                            <div class="icon">🎿</div>
+                            <div class="text">暂无装备</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                equipmentList.innerHTML = equipment.map(item => `
+                    <div class="equipment-card" onclick="location.href='equipment.html?id=${item.id}'">
+                        <div class="equipment-image">
+                            ${item.images && item.images.length > 0 
+                                ? `<img src="${item.images[0]}" alt="${item.name}">`
+                                : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;">${item.type === 'ski' ? '🎿' : item.type === 'accessory' ? '🧤' : '🏂'}</div>`
+                            }
+                        </div>
+                        <div class="equipment-info">
+                            <div class="equipment-name">${item.name}</div>
+                            <div class="equipment-brand">${item.brand || '未知品牌'} · ${getEquipmentTypeText(item.type)}</div>
+                            <div class="equipment-price">¥${formatMoney(item.price_day)}<span>/天</span></div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (e) {
+                loadingState.style.display = 'none';
+                console.error('加载装备失败:', e);
+            }
+        }
+        
+        // 绑定筛选事件
+        function bindFilterEvents() {
+            const filterTags = document.querySelectorAll('.filter-tag');
+            
+            filterTags.forEach(tag => {
+                tag.addEventListener('click', function() {
+                    filterTags.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentEquipmentType = this.dataset.type;
+                    loadEquipment();
+                });
+            });
+        }
+    </script>
+</body>
+</html>

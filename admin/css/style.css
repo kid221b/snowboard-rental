@@ -1,0 +1,460 @@
+/**
+ * 商家端样式
+ * 雪板租赁平台
+ */
+
+/* ==================== 登录页样式 ==================== */
+.admin-login-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-login-header {
+    padding: 80px 20px 40px;
+    text-align: center;
+    color: #fff;
+}
+
+.admin-login-logo {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+}
+
+.admin-login-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.admin-login-subtitle {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.admin-login-form {
+    flex: 1;
+    background: #fff;
+    border-radius: 24px 24px 0 0;
+    padding: 30px 20px;
+}
+
+/* ==================== 工作台样式 ==================== */
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.stat-card {
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1890ff;
+    margin-bottom: 4px;
+}
+
+.stat-value.warning {
+    color: #faad14;
+}
+
+.stat-value.success {
+    color: #52c41a;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #999;
+}
+
+.today-orders-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding: 0 4px;
+}
+
+/* ==================== 列表页样式 ==================== */
+.admin-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.admin-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.admin-card-title {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.admin-list-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-list-item:last-child {
+    border-bottom: none;
+}
+
+.admin-list-item-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.admin-list-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-list-item-content {
+    flex: 1;
+    margin-left: 12px;
+}
+
+.admin-list-item-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.admin-list-item-desc {
+    font-size: 13px;
+    color: #999;
+}
+
+.admin-list-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ==================== 状态标签 ==================== */
+.status-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.status-pending {
+    background: #fffbe6;
+    color: #faad14;
+}
+
+.status-confirmed {
+    background: #e6f7ff;
+    color: #1890ff;
+}
+
+.status-rented {
+    background: #f9f0ff;
+    color: #722ed1;
+}
+
+.status-completed {
+    background: #f6ffed;
+    color: #52c41a;
+}
+
+.status-cancelled {
+    background: #f5f5f5;
+    color: #8c8c8c;
+}
+
+.status-active {
+    background: #f6ffed;
+    color: #52c41a;
+}
+
+.status-inactive {
+    background: #f5f5f5;
+    color: #8c8c8c;
+}
+
+.status-sold_out {
+    background: #fffbe6;
+    color: #faad14;
+}
+
+/* ==================== 筛选标签 ==================== */
+.filter-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.filter-tab {
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #666;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.filter-tab.active {
+    background: #1890ff;
+    color: #fff;
+}
+
+/* ==================== 表单样式 ==================== */
+.form-section {
+    background: #fff;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+}
+
+.form-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #333;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.form-select {
+    width: 100%;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    font-size: 15px;
+    background: #fff;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+/* ==================== 头部导航 ==================== */
+.admin-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    padding: 12px 16px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-header-title {
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.admin-header-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-header-shop {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+/* ==================== 设置页样式 ==================== */
+.settings-section {
+    background: #fff;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.settings-item:last-child {
+    border-bottom: none;
+}
+
+.settings-item-label {
+    font-size: 15px;
+    color: #333;
+}
+
+.settings-item-value {
+    font-size: 14px;
+    color: #999;
+}
+
+/* ==================== 订单卡片 ==================== */
+.order-admin-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.order-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.order-admin-no {
+    font-size: 13px;
+    color: #999;
+}
+
+.order-admin-content {
+    display: flex;
+    padding: 12px 0;
+    border-top: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.order-admin-equipment {
+    flex: 1;
+}
+
+.order-admin-equipment-name {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.order-admin-dates {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.order-admin-price {
+    font-size: 16px;
+    color: #ff4d4f;
+    font-weight: 600;
+}
+
+.order-admin-user {
+    text-align: right;
+}
+
+.order-admin-user-name {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.order-admin-user-phone {
+    font-size: 13px;
+    color: #999;
+}
+
+.order-admin-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+/* ==================== 空状态 ==================== */
+.admin-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.admin-empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.admin-empty-text {
+    font-size: 14px;
+    color: #999;
+}
+
+/* ==================== 底部导航 ==================== */
+.admin-tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    background: #fff;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    z-index: 100;
+    max-width: 750px;
+    margin: 0 auto;
+}
+
+.admin-tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0;
+    color: #999;
+    transition: color 0.2s;
+}
+
+.admin-tab-item.active {
+    color: #1890ff;
+}
+
+.admin-tab-item .icon {
+    font-size: 24px;
+    margin-bottom: 2px;
+}
+
+.admin-tab-item .text {
+    font-size: 10px;
+}
+
+/* ==================== 响应式 ==================== */
+@media (max-width: 375px) {
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>装备管理 - 商家管理</title>
+    <link rel="stylesheet" href="../public/css/common.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="page" style="padding-bottom: 70px;">
+        <!-- 头部 -->
+        <div class="admin-header">
+            <div class="admin-header-title">装备管理</div>
+            <div>
+                <button class="btn btn-sm btn-primary" onclick="goAddEquipment()">+ 添加装备</button>
+            </div>
+        </div>
+        
+        <!-- 内容区域 -->
+        <div class="container" style="padding-top: 16px;">
+            <!-- 筛选 -->
+            <div class="filter-tabs" id="filterTabs">
+                <span class="filter-tab active" data-status="">全部</span>
+                <span class="filter-tab" data-status="active">在售</span>
+                <span class="filter-tab" data-status="inactive">已下架</span>
+                <span class="filter-tab" data-status="sold_out">售罄</span>
+            </div>
+            
+            <!-- 装备列表 -->
+            <div id="equipmentList">
+                <div class="admin-empty" id="loadingState">
+                    <div class="admin-empty-icon">⏳</div>
+                    <div class="admin-empty-text">加载中...</div>
+                </div>
+                
+                <div class="admin-empty" id="emptyState" style="display: none;">
+                    <div class="admin-empty-icon">🎿</div>
+                    <div class="admin-empty-text">暂无装备</div>
+                </div>
+                
+                <div id="equipmentListContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部导航 -->
+    <div class="admin-tab-bar">
+        <div class="admin-tab-item" onclick="location.href='index.html'">
+            <span class="icon">📊</span>
+            <span class="text">工作台</span>
+        </div>
+        <div class="admin-tab-item active">
+            <span class="icon">🎿</span>
+            <span class="text">装备</span>
+        </div>
+        <div class="admin-tab-item" onclick="location.href='orders.html'">
+            <span class="icon">📋</span>
+            <span class="text">订单</span>
+        </div>
+        <div class="admin-tab-item" onclick="location.href='settings.html'">
+            <span class="icon">⚙️</span>
+            <span class="text">设置</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../public/js/supabase-client.js"></script>
+    <script src="../public/js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        let currentSession = null;
+        let currentStatus = '';
+        let allEquipment = [];
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            currentSession = checkAdminAuth();
+            if (!currentSession) return;
+            
+            await loadEquipment();
+            bindFilterEvents();
+        });
+        
+        // 加载装备列表
+        async function loadEquipment() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const content = document.getElementById('equipmentListContent');
+            
+            loadingState.style.display = 'block';
+            emptyState.style.display = 'none';
+            content.innerHTML = '';
+            
+            try {
+                allEquipment = await getAdminEquipmentList(currentSession.shop_id);
+                
+                loadingState.style.display = 'none';
+                
+                const filtered = currentStatus 
+                    ? allEquipment.filter(e => e.status === currentStatus)
+                    : allEquipment;
+                
+                if (filtered.length === 0) {
+                    emptyState.style.display = 'flex';
+                    return;
+                }
+                
+                content.innerHTML = filtered.map(item => `
+                    <div class="admin-card">
+                        <div class="admin-list-item" style="padding: 0;">
+                            <div class="admin-list-item-image">
+                                ${item.images && item.images.length > 0 
+                                    ? `<img src="${item.images[0]}" alt="${item.name}">`
+                                    : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px;">🏂</div>`
+                                }
+                            </div>
+                            <div class="admin-list-item-content">
+                                <div class="admin-list-item-title">${item.name}</div>
+                                <div class="admin-list-item-desc">
+                                    ${item.brand || '未知品牌'} · ${getEquipmentTypeText(item.type)}
+                                </div>
+                                <div style="margin-top: 4px;">
+                                    <span class="order-admin-price">¥${formatMoney(item.price_day)}/天</span>
+                                    <span style="margin-left: 8px; font-size: 12px; color: #999;">库存: ${item.stock}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="admin-list-item-actions" style="margin-top: 12px; justify-content: flex-end;">
+                            <button class="btn btn-sm btn-default" onclick="editEquipment('${item.id}')">编辑</button>
+                            <button class="btn btn-sm ${item.status === 'active' ? 'btn-default' : 'btn-primary'}" onclick="toggleStatus('${item.id}', '${item.status}')">
+                                ${item.status === 'active' ? '下架' : '上架'}
+                            </button>
+                            <button class="btn btn-sm" style="color: #ff4d4f;" onclick="confirmDelete('${item.id}')">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (e) {
+                loadingState.style.display = 'none';
+                console.error('加载失败:', e);
+            }
+        }
+        
+        // 绑定筛选事件
+        function bindFilterEvents() {
+            const tabs = document.querySelectorAll('.filter-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentStatus = this.dataset.status;
+                    loadEquipment();
+                });
+            });
+        }
+        
+        // 跳转到添加装备页面
+        function goAddEquipment() {
+            location.href = 'equipment-edit.html';
+        }
+        
+        // 编辑装备
+        function editEquipment(id) {
+            location.href = `equipment-edit.html?id=${id}`;
+        }
+        
+        // 切换状态
+        async function toggleStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            
+            const success = await updateEquipment(id, { status: newStatus });
+            if (success) {
+                await loadEquipment();
+            }
+        }
+        
+        // 确认删除
+        function confirmDelete(id) {
+            if (!confirm('确定要删除该装备吗？')) return;
+            
+            deleteEquipment(id).then(success => {
+                if (success) {
+                    loadEquipment();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
