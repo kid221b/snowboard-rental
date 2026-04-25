@@ -10,7 +10,7 @@
  */
 async function getAdminEquipmentList(shopId) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('equipment')
             .select('*')
             .eq('shop_id', shopId)
@@ -35,7 +35,7 @@ async function getAdminEquipmentList(shopId) {
  */
 async function getAdminEquipmentDetail(equipmentId) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('equipment')
             .select('*')
             .eq('id', equipmentId)
@@ -62,7 +62,7 @@ async function createEquipment(equipmentData) {
     try {
         showLoading(true, '保存中...');
         
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('equipment')
             .insert({
                 shop_id: equipmentData.shop_id,
@@ -109,7 +109,7 @@ async function updateEquipment(equipmentId, equipmentData) {
     try {
         showLoading(true, '保存中...');
         
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('equipment')
             .update({
                 name: equipmentData.name,
@@ -153,7 +153,7 @@ async function deleteEquipment(equipmentId) {
     try {
         showLoading(true, '删除中...');
         
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('equipment')
             .delete()
             .eq('id', equipmentId);
@@ -182,7 +182,7 @@ async function deleteEquipment(equipmentId) {
  */
 async function getAdminOrderList(shopId, status = '') {
     try {
-        let query = supabase
+        let query = supabaseClient
             .from('orders')
             .select(`
                 *,
@@ -219,7 +219,7 @@ async function getTodayOrders(shopId) {
     try {
         const today = formatDate(new Date(), 'YYYY-MM-DD');
         
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('orders')
             .select(`
                 *,
@@ -253,7 +253,7 @@ async function updateOrderStatus(orderId, status) {
     try {
         showLoading(true, '更新中...');
         
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('orders')
             .update({ status: status })
             .eq('id', orderId);
@@ -284,28 +284,28 @@ async function getStatistics(shopId) {
         const today = formatDate(new Date(), 'YYYY-MM-DD');
         
         // 获取今日订单数
-        const { count: todayOrders } = await supabase
+        const { count: todayOrders } = await supabaseClient
             .from('orders')
             .select('*', { count: 'exact', head: true })
             .eq('shop_id', shopId)
             .gte('created_at', today + 'T00:00:00');
         
         // 获取待处理订单数
-        const { count: pendingOrders } = await supabase
+        const { count: pendingOrders } = await supabaseClient
             .from('orders')
             .select('*', { count: 'exact', head: true })
             .eq('shop_id', shopId)
             .in('status', ['pending', 'confirmed']);
         
         // 获取装备总数
-        const { count: totalEquipment } = await supabase
+        const { count: totalEquipment } = await supabaseClient
             .from('equipment')
             .select('*', { count: 'exact', head: true })
             .eq('shop_id', shopId);
         
         // 获取本月收入
         const monthStart = formatDate(new Date(), 'YYYY-MM') + '-01';
-        const { data: monthOrders } = await supabase
+        const { data: monthOrders } = await supabaseClient
             .from('orders')
             .select('total_price')
             .eq('shop_id', shopId)
@@ -341,7 +341,7 @@ async function updateShopInfo(shopId, shopData) {
     try {
         showLoading(true, '保存中...');
         
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('shops')
             .update({
                 name: shopData.name,
